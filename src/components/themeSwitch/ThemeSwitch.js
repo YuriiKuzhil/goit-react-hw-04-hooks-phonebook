@@ -1,6 +1,7 @@
-import { Text, Wrapper, Label } from './ThemeSwitch.styled';
 import { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
 import Switch from 'react-switch';
+import { Text, Wrapper, Label } from './ThemeSwitch.styled';
 import { FaMoon, FaSun } from 'react-icons/fa';
 
 export default function ThemeSwitch({ themeChange }) {
@@ -40,3 +41,6 @@ export default function ThemeSwitch({ themeChange }) {
     </Label>
   );
 }
+ThemeSwitch.propTypes = {
+  themeChange: PropTypes.func.isRequired,
+};

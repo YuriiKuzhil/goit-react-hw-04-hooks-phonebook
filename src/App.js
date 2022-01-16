@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import { useState, useEffect } from 'react';
 import toast, { Toaster } from 'react-hot-toast';
 import PhonebookForm from './components/phonebookForm';
 import ContactsList from './components/contacts/contactsList';
@@ -16,52 +16,49 @@ import { GlobalStyle } from './GlobalStyles';
 import { ThemeProvider } from 'styled-components';
 import { theme } from './constantStyles/theme';
 
-class App extends Component {
-  state = {
-    contacts: [],
-    filter: '',
-    themeStyle: 'light',
+export default function App() {
+  const [contacts, setContacts] = useState([]);
+  const [filter, setFilter] = useState('');
+  const [themeStyle, setThemeStyle] = useState('light');
+
+  useEffect(() => {
+    try {
+      const contacts = localStorage.getItem('contacts');
+      const parsedContacts = JSON.parse(contacts);
+      const themeStyle = localStorage.getItem('themeStyle');
+
+      if (parsedContacts) {
+        setContacts(parsedContacts);
+      }
+      if (themeStyle) {
+        setThemeStyle(themeStyle);
+      }
+    } catch {
+      toast.error('Something is wrong', {
+        style: {
+          border: '1px solid #E8301C',
+          color: '#E8301C',
+        },
+      });
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('contacts', JSON.stringify(contacts));
+    localStorage.setItem('themeStyle', themeStyle);
+  }, [contacts, themeStyle]);
+
+  const ThemeChange = checked => {
+    checked ? setThemeStyle('dark') : setThemeStyle('light');
   };
-  componentDidMount() {
-    const contacts = localStorage.getItem('contacts');
-    const parsedContacts = JSON.parse(contacts);
-
-    const themeStyle = localStorage.getItem('themeStyle');
-
-    if (parsedContacts) {
-      this.setState({ contacts: parsedContacts });
-    }
-    if (themeStyle) {
-      this.setState({ themeStyle: themeStyle });
-    }
-  }
-  componentDidUpdate(prevProps, prevState) {
-    const nextContacts = this.state.contacts;
-    const prevContacts = prevState.contacts;
-    const nextThemeStyle = this.state.themeStyle;
-    const prevThemeStyle = prevState.themeStyle;
-    if (nextContacts !== prevContacts) {
-      localStorage.setItem('contacts', JSON.stringify(nextContacts));
-    }
-    if (nextThemeStyle !== prevThemeStyle) {
-      localStorage.setItem('themeStyle', nextThemeStyle);
-    }
-  }
-  ThemeChange = checked => {
-    checked
-      ? this.setState({ themeStyle: 'dark' })
-      : this.setState({ themeStyle: 'light' });
-  };
-
-  compareNames = name => {
+  const compareNames = name => {
     const normalizeName = name.toLowerCase();
-    return this.state.contacts.some(
+    return contacts.some(
       contact => contact.name.toLowerCase() === normalizeName,
     );
   };
-
-  addContact = contact => {
-    if (this.compareNames(contact.name)) {
+  const addContact = contact => {
+    if (compareNames(contact.name)) {
       toast.error(`${contact.name} is already in contacts`, {
         style: {
           border: '1px solid #E8301C',
@@ -70,10 +67,7 @@ class App extends Component {
       });
       return;
     }
-
-    this.setState(({ contacts }) => ({
-      contacts: [contact, ...contacts],
-    }));
+    setContacts(state => [contact, ...state]);
 
     toast.success(`Contact ${contact.name} added!`, {
       style: {
@@ -82,12 +76,11 @@ class App extends Component {
     });
   };
 
-  changeFilter = e => {
-    this.setState({ filter: e.currentTarget.value });
+  const changeFilter = e => {
+    setFilter(e.currentTarget.value);
   };
 
-  findContacs = () => {
-    const { contacts, filter } = this.state;
+  const findContacs = () => {
     const normalizedFilter = filter.toLowerCase();
 
     return contacts.filter(contact =>
@@ -95,10 +88,8 @@ class App extends Component {
     );
   };
 
-  deleteContact = id => {
-    this.setState(prevState => ({
-      contacts: prevState.contacts.filter(contact => contact.id !== id),
-    }));
+  const deleteContact = id => {
+    setContacts(state => state.filter(contact => contact.id !== id));
     toast.success(`Contact deleted!`, {
       style: {
         border: '1px solid #49FF71',
@@ -106,36 +97,30 @@ class App extends Component {
     });
   };
 
-  render() {
-    const { filter, themeStyle } = this.state;
-
-    return (
-      <>
-        <ThemeProvider theme={theme[themeStyle]}>
-          <GlobalStyle />
-          <Wrapper>
-            <PhonebookFormWrapper>
-              <ThemeSwitch themeChange={this.ThemeChange} />
-              <Title>
-                Phone
-                <PartsOfWord>book</PartsOfWord>
-              </Title>
-              <PhonebookForm onSubmit={this.addContact} />
-            </PhonebookFormWrapper>
-            <ContactsContainer>
-              <ContactsTitle>Contacts</ContactsTitle>
-              <ContactsFilter value={filter} onChange={this.changeFilter} />
-              <ContactsList
-                filteredContacts={this.findContacs()}
-                deleteContact={this.deleteContact}
-              />
-            </ContactsContainer>
-            <Toaster position="bottom-center" reverseOrder={false} />
-          </Wrapper>
-        </ThemeProvider>
-      </>
-    );
-  }
+  return (
+    <>
+      <ThemeProvider theme={theme[themeStyle]}>
+        <GlobalStyle />
+        <Wrapper>
+          <PhonebookFormWrapper>
+            <ThemeSwitch themeChange={ThemeChange} />
+            <Title>
+              Phone
+              <PartsOfWord>book</PartsOfWord>
+            </Title>
+            <PhonebookForm onSubmit={addContact} />
+          </PhonebookFormWrapper>
+          <ContactsContainer>
+            <ContactsTitle>Contacts</ContactsTitle>
+            <ContactsFilter value={filter} onChange={changeFilter} />
+            <ContactsList
+              filteredContacts={findContacs()}
+              deleteContact={deleteContact}
+            />
+          </ContactsContainer>
+          <Toaster position="bottom-center" reverseOrder={false} />
+        </Wrapper>
+      </ThemeProvider>
+    </>
+  );
 }
-
-export default App;
