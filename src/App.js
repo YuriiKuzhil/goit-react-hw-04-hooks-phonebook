@@ -19,19 +19,17 @@ import { theme } from './constantStyles/theme';
 export default function App() {
   const [contacts, setContacts] = useState([]);
   const [filter, setFilter] = useState('');
-  const [themeStyle, setThemeStyle] = useState('light');
+  const [themeStyle, setThemeStyle] = useState(
+    () => localStorage.getItem('themeStyle') || 'light',
+  );
 
   useEffect(() => {
     try {
       const contacts = localStorage.getItem('contacts');
       const parsedContacts = JSON.parse(contacts);
-      const themeStyle = localStorage.getItem('themeStyle');
 
       if (parsedContacts) {
         setContacts(parsedContacts);
-      }
-      if (themeStyle) {
-        setThemeStyle(themeStyle);
       }
     } catch {
       toast.error('Something is wrong', {
